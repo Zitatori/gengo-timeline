@@ -1,0 +1,435 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Japanese Era Timeline & Converter</title>
+  <style>
+    :root{ --bg:#0b0e14; --surface:#11151f; --muted:#2a2f3a; 
+--text:#e6e6e6; --accent:#7c9cff; --accent2:#00c2a8; --danger:#ff6b6b; }
+    *{box-sizing:border-box}
+    
+body{margin:0;background:linear-gradient(180deg,var(--bg),#0f1422);color:var(--text);font:16px/1.5 
+system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+    header{padding:28px 20px 8px;max-width:1100px;margin:auto}
+    h1{margin:0 0 10px;font-weight:800;font-size:clamp(22px,4vw,34px)}
+    p.lead{opacity:.85;margin:0}
+    .wrap{max-width:1100px;margin:16px auto 60px;padding:0 
+20px;display:grid;gap:18px}
+    
+.card{background:linear-gradient(180deg,var(--surface),#0e1420);border:1px 
+solid #1a2030;border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+    .card .hd{padding:14px 16px;border-bottom:1px solid 
+#1a2030;font-weight:700;display:flex;align-items:center;gap:10px;justify-content:space-between}
+    .card .bd{padding:16px}
+    .row{display:grid;gap:14px}
+    @media(min-width:900px){.row-2{grid-template-columns:1fr 
+1fr}.row-3{grid-template-columns:2fr 1.2fr 1.2fr}}
+
+    
+.timeline{display:flex;height:60px;border-radius:12px;overflow:hidden;border:1px 
+solid #1a2030}
+    
+.era{position:relative;display:flex;align-items:center;justify-content:center;font-weight:700;letter-spacing:.02em;user-select:none;cursor:pointer}
+    .era small{opacity:.85;font-weight:600}
+    .era .label{font-size:11px;line-height:1.2;text-shadow:0 2px 12px 
+rgba(0,0,0,.5)}
+    .era.active{outline:2px solid var(--accent);z-index:2}
+    .era:hover{filter:brightness(1.08)}
+
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .ctrl{display:flex;flex-direction:column;gap:6px}
+    label{font-size:12px;opacity:.8}
+    input[type="number"],select{background:#0b1220;border:1px solid 
+#1b2232;border-radius:12px;color:#e6e6e6;padding:12px 12px;font-size:16px}
+    input[type="range"]{width:100%}
+    
+.btn{background:linear-gradient(180deg,var(--accent),#5c7cff);color:#0b0e14;border:0;border-radius:12px;padding:12px 
+14px;font-weight:800;cursor:pointer}
+    .btn.alt{background:linear-gradient(180deg,var(--accent2),#00a690)}
+    .iconbtn{border:1px solid 
+#1b2232;background:#0b1220;color:#e6e6e6;border-radius:12px;padding:10px 
+12px;cursor:pointer;font-weight:800}
+
+    .result{font-size:18px;font-weight:800;padding:10px 
+12px;border-radius:12px;background:#0b1220;border:1px solid #1b2232}
+
+    table{width:100%;border-collapse:collapse}
+    th,td{border-bottom:1px solid #202635;padding:10px 
+8px;text-align:left}
+    th{opacity:.8;font-weight:700}
+    tr:hover td{background:#0c1424}
+
+    .hint{font-size:12px;opacity:.75}
+    footer{opacity:.7;text-align:center;padding:24px}
+    .chip{display:inline-flex;align-items:center;gap:6px;padding:6px 
+10px;border-radius:999px;border:1px solid 
+#26304a;background:#0d1629;font-size:12px}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Japanese Era Timeline & Converter</h1>
+    <p class="lead">Convert between Japanese eras (Heisei, Reiwa, etc.) 
+and Gregorian years. Click the timeline or use the inputs. Single 
+converter with a ↔︎ switch.</p>
+  </header>
+
+  <main class="wrap">
+    <section class="card">
+      <div class="hd">Timeline (1868 – Present)</div>
+      <div class="bd">
+        <div id="timeline" class="timeline"></div>
+        <div 
+style="display:flex;justify-content:space-between;margin-top:6px" 
+class="hint">
+          <span>1868</span><span></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Single converter with direction toggle -->
+    <section class="card">
+      <div class="hd">
+        <span id="convTitle">Era → Gregorian</span>
+        <button id="swapBtn" class="iconbtn" title="Swap direction" 
+aria-label="Swap direction">↔︎</button>
+      </div>
+      <div class="bd">
+        <div class="grid" id="inputsEra2Ad">
+          <div class="ctrl">
+            <label for="eraSel">Era</label>
+            <select id="eraSel"></select>
+          </div>
+          <div class="ctrl">
+            <label for="eraYear">Year (1 = First year)</label>
+            <input id="eraYear" type="number" min="1" value="1" />
+          </div>
+        </div>
+        <div class="grid" id="inputsAd2Era" style="display:none">
+          <div class="ctrl">
+            <label for="adYear">Gregorian year</label>
+            <input id="adYear" type="number" value="1989" min="1868" />
+          </div>
+          <div class="ctrl">
+            <label>&nbsp;</label>
+            <button id="adBtn" class="btn alt">Convert</button>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;margin:14px 
+0">
+          <input id="yearSlider" type="range" min="1" max="31" value="1" 
+/>
+          <span class="chip"><span id="eraChip">—</span></span>
+        </div>
+        <div class="result" id="resultBox">Gregorian Year —</div>
+        <div class="hint" style="margin-top:8px">Year-level conversion 
+(ignores exact changeover days).</div>
+      </div>
+    </section>
+
+    <section class="row row-3">
+      <div class="card">
+        <div class="hd">Era Table</div>
+        <div class="bd">
+          <table id="eraTable">
+            
+<thead><tr><th>Era</th><th>Start</th><th>End</th><th>Years</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <div class="hd">Major Events in Japan (Era notation)</div>
+        <div class="bd">
+          <table>
+            <thead><tr><th>Year</th><th>Event</th></tr></thead>
+            <tbody id="jpEvents"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <div class="hd">Major Events in the World <button 
+id="worldModeBtn" class="iconbtn" title="Switch year format" 
+aria-label="Switch year format">↔︎</button></div>
+        <div class="bd">
+          <table>
+            <thead><tr><th>Year</th><th>Event</th></tr></thead>
+            <tbody id="worldEvents"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="hd">Share</div>
+      <div class="bd">
+        <p class="hint">Single HTML file. Host on GitHub Pages / Netlify. 
+Click any event row to jump the timeline.</p>
+        <button class="btn" id="copyBtn">Copy link with year</button>
+        <span class="hint" id="copyMsg" style="margin-left:10px"></span>
+      </div>
+    </section>
+
+    <footer>© 2025 Japanese Era Timeline (Demo) — Approximate, educational 
+use only</footer>
+  </main>
+
+<script>
+  // ===== Eras =====
+  const ERAS = [
+    { key:'meiji',  name:'Meiji',  start:1868, end:1912, color:'#253f73' 
+},
+    { key:'taisho', name:'Taishō', start:1912, end:1926, color:'#3a6ea5' 
+},
+    { key:'showa',  name:'Shōwa',  start:1926, end:1989, color:'#5a8fd8' 
+},
+    { key:'heisei', name:'Heisei', start:1989, end:2019, color:'#7c9cff' 
+},
+    { key:'reiwa',  name:'Reiwa',  start:2019, end:null,  color:'#00c2a8' 
+},
+  ];
+  const ERA_KANJI = { meiji:'明治', taisho:'大正', showa:'昭和', 
+heisei:'平成', reiwa:'令和' };
+
+  // ===== Direction state =====
+  let direction = 'era2ad'; // or 'ad2era'
+
+  // ===== Converters (year-level) =====
+  function eraToAD(eraKey, eraYear){
+    const era = ERAS.find(e=>e.key===eraKey); if(!era) return null;
+    const y = parseInt(eraYear,10); if(!(y>=1)) return null; return 
+era.start + (y - 1);
+  }
+  function adToEra(year){
+    const y = parseInt(year,10); if(!(y>=1868)) return null;
+    for(const e of ERAS){ const end = e.end ?? (new 
+Date().getFullYear()+1); if(y>=e.start && y<end){ return { key:e.key, 
+name:e.name, year:y - e.start + 1 }; } }
+    return null;
+  }
+
+  // ===== Timeline =====
+  function buildTimeline(){
+    const tl = document.getElementById('timeline');
+    const totalYears = ((ERAS.at(-2).end) - ERAS[0].start) + (new 
+Date().getFullYear() - 2019 + 1);
+    ERAS.forEach(e=>{
+      const end = e.end ?? new Date().getFullYear()+1; const span = end - 
+e.start;
+      const div = document.createElement('div'); div.className='era';
+      div.style.width = (span/totalYears*100)+'%'; div.style.background = 
+e.color; div.dataset.key=e.key;
+      div.innerHTML = `<div class=\"label\">${ERA_KANJI[e.key]} 
+(${e.name})<br><small>${e.start}–${e.end?e.end-1:''}</small></div>`;
+      div.addEventListener('click',()=> selectEra(e.key)); 
+tl.appendChild(div);
+    });
+  }
+
+  // ===== Controls =====
+  function initControls(){
+    const sel = document.getElementById('eraSel');
+    ERAS.forEach(e=>{ const o=document.createElement('option'); 
+o.value=e.key; o.textContent = `${ERA_KANJI[e.key]} (${e.name})`; 
+sel.appendChild(o); });
+
+    sel.addEventListener('change',()=>{ const 
+e=ERAS.find(x=>x.key===sel.value); 
+document.getElementById('yearSlider').max=(e.end ?? (new 
+Date().getFullYear()+1)) - e.start; selectEra(sel.value,false); 
+updateFromEra(); });
+    document.getElementById('eraYear').addEventListener('input',()=>{ 
+syncSliderWithInput(); updateFromEra(); });
+    document.getElementById('yearSlider').addEventListener('input',()=>{ 
+document.getElementById('eraYear').value=document.getElementById('yearSlider').value; 
+updateFromEra(); });
+
+    document.getElementById('adBtn').addEventListener('click',()=>{
+      const v=document.getElementById('adYear').value; const 
+res=adToEra(v); const out=document.getElementById('resultBox');
+      if(!res){ out.textContent='Enter year ≥1868'; return; }
+      const yearLbl=(res.year===1)?'1':res.year;
+      out.textContent=`${ERA_KANJI[res.key]} (${res.name}) — Year 
+${yearLbl}`;
+      document.getElementById('eraSel').value=res.key; const 
+e=ERAS.find(x=>x.key===res.key);
+      document.getElementById('yearSlider').max=(e.end ?? (new 
+Date().getFullYear()+1)) - e.start;
+      document.getElementById('eraYear').value=res.year; updateFromEra(); 
+activateTimeline(res.key);
+    });
+
+    document.getElementById('swapBtn').addEventListener('click',()=>{
+      direction = (direction==='era2ad')?'ad2era':'era2ad';
+      const isEra2Ad = direction==='era2ad';
+      document.getElementById('inputsEra2Ad').style.display = isEra2Ad? 
+'grid':'none';
+      document.getElementById('inputsAd2Era').style.display = isEra2Ad? 
+'none':'grid';
+      document.getElementById('convTitle').textContent = isEra2Ad? 'Era → 
+Gregorian' : 'Gregorian → Era';
+      document.getElementById('resultBox').textContent = isEra2Ad? 
+'Gregorian Year —' : 'Era —';
+    });
+  }
+
+  function syncSliderWithInput(){
+    const era = 
+ERAS.find(e=>e.key===document.getElementById('eraSel').value);
+    const max = (era.end ?? (new Date().getFullYear()+1)) - era.start; 
+const inp=document.getElementById('eraYear');
+    let v=parseInt(inp.value||'1',10); v=Math.max(1,Math.min(max,v)); 
+inp.value=v; document.getElementById('yearSlider').value=v;
+  }
+
+  function updateFromEra(){
+    const eraKey=document.getElementById('eraSel').value; const 
+y=parseInt(document.getElementById('eraYear').value,10);
+    const ad=eraToAD(eraKey,y); const era=ERAS.find(e=>e.key===eraKey);
+    document.getElementById('eraChip').textContent=`${ERA_KANJI[era.key]} 
+(${era.name}) ${y}`;
+    if(direction==='era2ad'){
+      document.getElementById('resultBox').textContent = ad?`Gregorian 
+${ad}`:'—';
+    }
+    document.getElementById('adYear').value = ad ?? '';
+    activateTimeline(eraKey);
+  }
+
+  function activateTimeline(eraKey){ document.querySelectorAll('.timeline 
+.era').forEach(div=>{ div.classList.toggle('active', 
+div.dataset.key===eraKey); }); }
+  function selectEra(eraKey, focus=true){ 
+document.getElementById('eraSel').value=eraKey; const 
+e=ERAS.find(x=>x.key===eraKey); const max=(e.end ?? (new 
+Date().getFullYear()+1)) - e.start; 
+document.getElementById('yearSlider').max=max; if(focus){ 
+document.getElementById('eraYear').focus(); } updateFromEra(); }
+
+  function buildEraTable(){
+    const tb=document.querySelector('#eraTable tbody'); tb.innerHTML='';
+    ERAS.forEach(e=>{ const endDisp=e.end? (e.end-1) : 'Now'; const 
+span=(e.end ?? (new Date().getFullYear()+1)) - e.start; const 
+tr=document.createElement('tr'); tr.innerHTML=`<td>${ERA_KANJI[e.key]} 
+(${e.name})</td><td>${e.start}</td><td>${endDisp}</td><td>${span}</td>`; 
+tr.addEventListener('click',()=>selectEra(e.key)); tb.appendChild(tr); });
+  }
+
+  // ===== Events =====
+  const JP_EVENTS = [
+    { y:1868, t:'Meiji Restoration begins' },
+    { y:1932, t:'Proclamation of Manchukuo' },
+    { y:1945, t:'Great Tokyo Air Raid (Mar 9–10)' },
+    { y:1945, t:'US landing on Okinawa (Apr 1)' },
+    { y:1945, t:'Atomic bombing of Hiroshima (Aug 6)' },
+    { y:1945, t:'Atomic bombing of Nagasaki (Aug 9)' },
+    { y:1972, t:'Okinawa Reversion to Japan' },
+    { y:1989, t:'Start of Heisei era' },
+    { y:1995, t:'Great Hanshin-Awaji Earthquake' },
+    { y:2011, t:'Great East Japan Earthquake (M9.0)' },
+    { y:2012, t:'Tokyo Skytree opens' },
+    { y:2019, t:'Start of Reiwa era' },
+    { y:2021, t:'Tokyo Olympics (held)' },
+    { y:2024, t:'Noto Peninsula Earthquake' },
+  ];
+  const WORLD_EVENTS = [
+    { y:1914, t:'World War I begins' },
+    { y:1939, t:'Germany invades Poland (WWII begins)' },
+    { y:1969, t:'Apollo 11 Moon landing' },
+    { y:1989, t:'Fall of the Berlin Wall' },
+    { y:2001, t:'September 11 attacks' },
+    { y:2008, t:'Global financial crisis' },
+    { y:2020, t:'COVID-19 pandemic' },
+    { y:2023, t:'G7 Hiroshima Summit (Japan hosts)' },
+  ];
+
+  function formatEraLabelFromAD(year){
+    const m = adToEra(year);
+    if(!m) return year+'';
+    const name = `${ERA_KANJI[m.key]} (${m.name})`;
+    const label = (m.year===1)? `${name} 1` : `${name} ${m.year}`;
+    return label;
+  }
+
+  let WORLD_MODE = 'ad'; // 'ad' or 'era'
+
+  function renderJpEvents(){
+    const jtb=document.getElementById('jpEvents');
+    jtb.innerHTML='';
+    JP_EVENTS.forEach(e=>{
+      const tr=document.createElement('tr');
+      const eraLabel = formatEraLabelFromAD(e.y);
+      tr.innerHTML = `<td>${eraLabel}</td><td>${e.t}</td>`;
+      tr.addEventListener('click',()=>{ const m=adToEra(e.y); if(m){ 
+selectEra(m.key); document.getElementById('eraYear').value=m.year; 
+updateFromEra(); } });
+      jtb.appendChild(tr);
+    });
+  }
+
+  function renderWorldEvents(){
+    const wtb=document.getElementById('worldEvents');
+    wtb.innerHTML='';
+    WORLD_EVENTS.forEach(e=>{
+      let yearCol;
+      if(WORLD_MODE==='ad'){
+        yearCol = `${e.y}`;
+      }else{
+        yearCol = `${formatEraLabelFromAD(e.y)}`; // no AD in parentheses
+      }
+      const tr=document.createElement('tr');
+      tr.innerHTML = `<td>${yearCol}</td><td>${e.t}</td>`;
+      tr.addEventListener('click',()=>{ const m=adToEra(e.y); if(m){ 
+selectEra(m.key); document.getElementById('eraYear').value=m.year; 
+updateFromEra(); } });
+      wtb.appendChild(tr);
+    });
+  }
+
+  function wireWorldModeToggle(){
+    const btn = document.getElementById('worldModeBtn');
+    if(!btn) return;
+    btn.addEventListener('click',()=>{
+      WORLD_MODE = (WORLD_MODE==='ad') ? 'era' : 'ad';
+      btn.textContent = '↔︎';
+      renderWorldEvents();
+    });
+  }
+
+  // ===== Share URL =====
+  function initShare(){
+    const btn=document.getElementById('copyBtn');
+    btn.addEventListener('click', async ()=>{
+      const y=document.getElementById('adYear').value || 
+eraToAD(document.getElementById('eraSel').value, 
+document.getElementById('eraYear').value) || '';
+      const url=new URL(window.location.href); url.searchParams.set('y', 
+y);
+      try{ await navigator.clipboard.writeText(url.toString()); 
+document.getElementById('copyMsg').textContent='Copied!'; }
+      catch{ document.getElementById('copyMsg').textContent='Copy failed'; 
+}
+      
+setTimeout(()=>document.getElementById('copyMsg').textContent='',1800);
+    });
+    const qs=new URLSearchParams(location.search); const qy=qs.get('y'); 
+if(qy){ const res=adToEra(qy); if(res){ 
+document.getElementById('eraSel').value=res.key; 
+document.getElementById('eraYear').value=res.year; updateFromEra(); 
+activateTimeline(res.key); } }
+  }
+
+  // ===== Boot =====
+  buildTimeline();
+  initControls();
+  buildEraTable();
+  renderJpEvents();
+  renderWorldEvents();
+  wireWorldModeToggle();
+  initShare();
+  selectEra('heisei');
+</script>
+</body>
+</html>
+
