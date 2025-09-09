@@ -21,3 +21,9 @@ Edit and commit `index.html` directly.
 ---
 
 *Year-level conversion only (exact changeover days not included).*
+
+
+## Screenshot
+
+![Gengo Timeline Screenshot](Gengo.png)
+
